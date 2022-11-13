@@ -50,7 +50,49 @@ Eigen::Matrix4f get_model_matrix(float angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
 {
     // TODO: Use the same projection matrix from the previous assignments
+    Eigen::Matrix4f projection;
 
+    //------------------------
+    Eigen::Vector3f Near;
+    Near = {aspect_ratio*(zNear)*tan(eye_fov/2), (zNear)*tan(eye_fov/2), -zNear};
+    
+    Eigen::Matrix4f M_or_tr;
+    Eigen::Matrix4f M_or_sc;
+    Eigen::Matrix4f M_or;
+    Eigen::Matrix4f M_per_or;
+
+    //attention: cause f>n>0, we need to use Zn=-n, Zf=-f to recalculate this "per_or" matrix
+    M_per_or << zNear, 0, 0, 0,
+        0, zNear, 0, 0,
+        0, 0, (zNear+zFar), (zNear*zFar),
+        0, 0, -1, 0;
+
+    M_or_sc << 1/Near[0], 0, 0, 0,
+        0, 1/Near[1], 0, 0,
+        0, 0, 2/(zFar-zNear),0,
+        0, 0, 0, 1;
+
+    M_or_tr << 1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, (zNear+zFar)/2,  // Zn=-Znear, Zf=-Zfar, Z_or_tran = -(Zn+Zf)/2
+        0, 0, 0, 1;
+
+    M_or = M_or_sc * M_or_tr;
+    projection = M_or * M_per_or;
+
+    // Flip the camera view alone plane z=0;
+    // Otherwise, multiply by (-1) at line 106 in the rasterizer.cpp, to flip the z-buffer. (work, but not make sense with z-buffer < 0 after multiplying.)
+    Eigen::Matrix4f Mirror; 
+    Mirror <<
+        1, 0, 0, 0, 
+        0, 1, 0, 0, 
+        0, 0, -1, 0, 
+        0, 0, 0, 1;
+
+    projection = Mirror * projection;
+    //------------------------
+
+    return projection;
 }
 
 Eigen::Vector3f vertex_shader(const vertex_shader_payload& payload)
@@ -59,8 +101,8 @@ Eigen::Vector3f vertex_shader(const vertex_shader_payload& payload)
 }
 
 Eigen::Vector3f normal_fragment_shader(const fragment_shader_payload& payload)
-{
-    Eigen::Vector3f return_color = (payload.normal.head<3>().normalized() + Eigen::Vector3f(1.0f, 1.0f, 1.0f)) / 2.f;
+{   
+    Eigen::Vector3f return_color = (payload.normal.head<3>().normalized() + Eigen::Vector3f(1.0f, 1.0f, 1.0f)) / 2.f; //after normalize, normals is [-1,1]
     Eigen::Vector3f result;
     result << return_color.x() * 255, return_color.y() * 255, return_color.z() * 255;
     return result;
@@ -162,7 +204,7 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload& payl
 
     std::vector<light> lights = {l1, l2};
     Eigen::Vector3f amb_light_intensity{10, 10, 10};
-    Eigen::Vector3f eye_pos{0, 0, 10};
+    Eigen::Vector3f eye_pos{0, 0, -10};
 
     float p = 150;
 
