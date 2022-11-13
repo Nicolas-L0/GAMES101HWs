@@ -144,10 +144,6 @@ float min3f(float a, float b, float c)
 void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     auto v = t.toVector4();
     // TODO : Find out the bounding box of current triangle.
-    /*
-    Eigen::Vector2f bbox_max = {std::max({v[0].x(), v[1].x(), v[2].x()}), std::max({v[0].y(), v[1].y(), v[2].y()})};
-    Eigen::Vector2f bbox_min = {std::min({v[0].x(), v[1].x(), v[2].x()}), std::min({v[0].y(), v[1].y(), v[2].y()})};
-    */
 
     int bbox_x_max = (int) round(max3f(v[0].x(), v[1].x(), v[2].x()));
     int bbox_x_min = (int) round(min3f(v[0].x(), v[1].x(), v[2].x()));
@@ -160,6 +156,8 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
         for(float y = bbox_y_min; y < bbox_y_max; y++){
             float y_f = y + 0.5;
             if (insideTriangle(x_f, y_f, t.v)){
+                //std::cout << "Z:" <<  v[0].z() << ", " << v[1].z() <<  ", " << v[2].z() << std::endl; 
+                
                 auto[alpha, beta, gamma] = computeBarycentric2D(x_f, y_f, t.v);
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();

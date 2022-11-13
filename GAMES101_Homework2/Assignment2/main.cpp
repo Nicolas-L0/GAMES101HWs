@@ -32,20 +32,23 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
 {
     // TODO: Copy-paste your implementation from the previous assignment.
     Eigen::Matrix4f projection;
-
+    
     //------------------------
+    zNear = abs(zNear);
+    zFar = abs(zFar);
     Eigen::Vector3f Near;
-    Near = {aspect_ratio*(zNear)*tan(eye_fov/2), (zNear)*tan(eye_fov/2), zNear};
+    Near = {aspect_ratio*(zNear)*tan(eye_fov/2), (zNear)*tan(eye_fov/2), -zNear};
 
     Eigen::Matrix4f M_or_tr;
     Eigen::Matrix4f M_or_sc;
     Eigen::Matrix4f M_or;
     Eigen::Matrix4f M_per_or;
 
+    //attention: cause f>n>0, we need to use Zn=-n, Zf=-f to recalculate this "per_or" matrix
     M_per_or << zNear, 0, 0, 0,
         0, zNear, 0, 0,
-        0, 0, zNear+zFar, -(zNear*zFar),
-        0, 0, 1, 0;
+        0, 0, (zNear+zFar), (zNear*zFar),
+        0, 0, -1, 0;
 
     M_or_sc << 1/Near[0], 0, 0, 0,
         0, 1/Near[1], 0, 0,
@@ -54,13 +57,31 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
 
     M_or_tr << 1, 0, 0, 0,
         0, 1, 0, 0,
-        0, 0, 1, -(zNear+zFar)/2,
+        0, 0, 1, (zNear+zFar)/2,  // Zn=-Znear, Zf=-Zfar, Z_or_tran = -(Zn+Zf)/2
         0, 0, 0, 1;
 
     M_or = M_or_sc * M_or_tr;
-
     projection = M_or * M_per_or;
+
+    // Flip the camera view alone plane z=0;
+    // Otherwise, multiply by (-1) at line 106 in the rasterizer.cpp, to flip the z-buffer. (work, but not make sense with z-buffer < 0 after multiplying.)
+    Eigen::Matrix4f Mirror; 
+    Mirror <<
+        1, 0, 0, 0, 
+        0, 1, 0, 0, 
+        0, 0, -1, 0, 
+        0, 0, 0, 1;
+
+    projection = Mirror * projection;
     //------------------------
+
+    /* //reference from https://zhuanlan.zhihu.com/p/509902950 
+    projection <<
+        zNear/Near.x(), 0, 0, 0,
+        0, zNear/Near.y(), 0, 0,
+        0, 0, -(zFar + zNear)/(zFar - zNear), -(2*zNear*zFar)/(zFar - zNear),
+        0, 0, -1, 0;
+    */
     return projection;
 }
 

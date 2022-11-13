@@ -6,4 +6,5 @@
 - [提高项 5 分] 用 super-sampling 处理 Anti-aliasing。
 
 # 其他
-- 修改hardcode三角形的颜色参数，测试代码对颜色的插值：完成
+- 修改hard-coded三角形的颜色参数，测试代码对颜色的插值：完成
+- (update) 按照 `Zn = -Znear, Zf = -Zfar` 重新计算了投影矩阵，修复了画面视角不正确的问题。并导出了 `MSAA_colorful_projectionFIXED.png` 。
