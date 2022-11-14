@@ -24,6 +24,10 @@ public:
 
     Eigen::Vector3f getColor(float u, float v)
     {
+        // to solve uv > 1 or < 0, ref: https://games-cn.org/forums/topic/zuoye3uvzuobiaoquzhifanwei/
+        u = std::clamp(u, 0.f, 1.f);
+        v = std::clamp(v, 0.f, 1.f);
+
         auto u_img = u * width;
         auto v_img = (1 - v) * height;
         auto color = image_data.at<cv::Vec3b>(v_img, u_img);
@@ -34,7 +38,7 @@ public:
     {
         auto u_img = u * width;
         auto v_img = (1 - v) * height;
-        //auto color = image_data.at<cv::Vec3b>(v_img, u_img);
+        //auto color = image_data.at<cv::Vec3b>(v_img, u_img);  //aatention, v before u!
 
         Eigen::Vector2f u00 {floor(u_img + 0.5) - 0.5, floor(v_img + 0.5) - 0.5};
         Eigen::Vector2f u01 {floor(u_img + 0.5) - 0.5, floor(v_img + 0.5) + 0.5};
