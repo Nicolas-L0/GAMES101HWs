@@ -8,6 +8,9 @@ inline float deg2rad(const float &deg)
 { return deg * M_PI/180.0; }
 
 // Compute reflection direction
+// to learn reflection and refraction: 
+// - https://zhuanlan.zhihu.com/p/91129191
+// - https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
 Vector3f reflect(const Vector3f &I, const Vector3f &N)
 {
     return I - 2 * dotProduct(I, N) * N;
@@ -46,6 +49,7 @@ Vector3f refract(const Vector3f &I, const Vector3f &N, const float &ior)
 //
 // \param ior is the material refractive index
 // [/comment]
+// Fresnel Equation: https://zhuanlan.zhihu.com/p/480405520
 float fresnel(const Vector3f &I, const Vector3f &N, const float &ior)
 {
     float cosi = clamp(-1, 1, dotProduct(I, N));
@@ -223,14 +227,18 @@ void Renderer::Render(const Scene& scene)
         for (int i = 0; i < scene.width; ++i)
         {
             // generate primary ray direction
+            // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
             float x;
             float y;
             // TODO: Find the x and y positions of the current pixel to get the direction
             // vector that passes through it.
             // Also, don't forget to multiply both of them with the variable *scale*, and
-            // x (horizontal) variable with the *imageAspectRatio*            
+            // x (horizontal) variable with the *imageAspectRatio*     
+            x = (2.0f * ((i + 0.5f) / scene.width) - 1.0f) * scale * imageAspectRatio;
+            y = (1.0f - 2.0f * ((j + 0.5f) / scene.height)) * scale;       
 
             Vector3f dir = Vector3f(x, y, -1); // Don't forget to normalize this direction!
+            dir = normalize(dir);
             framebuffer[m++] = castRay(eye_pos, dir, scene, 0);
         }
         UpdateProgress(j / (float)scene.height);
